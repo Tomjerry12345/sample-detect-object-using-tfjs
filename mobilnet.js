@@ -1,4 +1,4 @@
-const imageURL = "cat.jpg";
+const imageURL = "dandelion.jpg";
 const GOOGLE_CLOUD_STORAGE_DIR =
   "https://storage.googleapis.com/tfjs-models/savedmodel/";
 const MODEL_FILE_URL = "mobilenet_v2_1.0_224/model.json";
@@ -6,12 +6,20 @@ const INPUT_NODE_NAME = "images";
 const OUTPUT_NODE_NAME = "module_apply_default/MobilenetV2/Logits/output";
 const PREPROCESS_DIVISOR = tf.scalar(255 / 2);
 
-const PATH_MODEL = "my_model/model.json"
+const PATH_MODEL = "my-model/model.json";
 
 const cat = document.getElementById("cat");
 const resultElement = document.getElementById("result");
 
 let model = null;
+
+const LABELS = {
+  0: "Daisy",
+  1: "Dandelion",
+  2: "Roses",
+  3: "Sunflowers",
+  4: "Tulips",
+};
 
 cat.onload = async () => {
   resultElement.innerText = "Loading MobileNet...";
@@ -19,15 +27,38 @@ cat.onload = async () => {
   // model = await tf.loadGraphModel(GOOGLE_CLOUD_STORAGE_DIR + MODEL_FILE_URL);
   model = await tf.loadLayersModel(PATH_MODEL);
 
-  console.log("model", model.summary());
-
   const pixels = tf.browser.fromPixels(cat);
 
   // model.predict(pixels)
 
   let result = predict(pixels);
 
-  console.log("result", result);
+  // const values = result.dataSync();
+
+  // let predictionList = [];
+  // for (let i = 0; i < values.length; i++) {
+  //   predictionList.push({ value: values[i], index: i });
+  // }
+
+  // predictionList = predictionList
+  //   .sort((a, b) => {
+  //     return b.value - a.value;
+  //   })
+  //   .slice(0,1);
+
+  // const prediksi = predictionList.map((x) => {
+  //   return { label: LABELS[x.index], value: x.value };
+  // });
+
+  // console.log("prediksi", prediksi);
+
+  const axis =  1
+
+  const prediction = Array.from(result.argMax(axis).dataSync())
+
+  console.log("prediction", prediction)
+
+  resultElement.innerText = JSON.stringify(prediction)
 
   // const topK = getTopKClasses(result, 5);
   // console.timeEnd("First prediction");
@@ -41,15 +72,18 @@ cat.onload = async () => {
 };
 
 const predict = (input) => {
-  const preprocessedInput = tf.div(
-    tf.sub(input.asType("float32"), PREPROCESS_DIVISOR),
-    PREPROCESS_DIVISOR
-  );
+  // const preprocessedInput = tf.div(
+  //   tf.sub(input.asType("float32"), PREPROCESS_DIVISOR),
+  //   PREPROCESS_DIVISOR
+  // );
 
-  const t = tf.reshape(preprocessedInput, [1, 180,180,3])
-  console.log("t", t);
+  const imResize = input.resizeBilinear([180, 180])
 
-  return model.predict(t)
+  const expandimsImage = tf.expandDims(imResize)
+
+  const t = expandimsImage.reshape([1, 180, 180, 3]);
+
+  return model.predict(t);
 
   // return model.execute({ [INPUT_NODE_NAME]: reshapedInput }, OUTPUT_NODE_NAME);
 };
