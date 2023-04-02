@@ -1,4 +1,11 @@
-const imageURL = "dandelion.jpg";
+const PATH_SEL_BASAL = "data-testing/karsinoma_sel_basal/"
+const PATH_SEL_SKUAMOSA = "data-testing/karsinoma_sel_skuamosa/"
+const imageURL = "ISIC_0025471.jpg";
+
+const classes = 1
+
+const testing_image = (classes === 0 ? PATH_SEL_BASAL : PATH_SEL_SKUAMOSA) + imageURL
+
 const GOOGLE_CLOUD_STORAGE_DIR =
   "https://storage.googleapis.com/tfjs-models/savedmodel/";
 const MODEL_FILE_URL = "mobilenet_v2_1.0_224/model.json";
@@ -24,33 +31,11 @@ const LABELS = {
 cat.onload = async () => {
   resultElement.innerText = "Loading MobileNet...";
 
-  // model = await tf.loadGraphModel(GOOGLE_CLOUD_STORAGE_DIR + MODEL_FILE_URL);
   model = await tf.loadLayersModel(PATH_MODEL);
 
   const pixels = tf.browser.fromPixels(cat);
 
-  // model.predict(pixels)
-
   let result = predict(pixels);
-
-  // const values = result.dataSync();
-
-  // let predictionList = [];
-  // for (let i = 0; i < values.length; i++) {
-  //   predictionList.push({ value: values[i], index: i });
-  // }
-
-  // predictionList = predictionList
-  //   .sort((a, b) => {
-  //     return b.value - a.value;
-  //   })
-  //   .slice(0,1);
-
-  // const prediksi = predictionList.map((x) => {
-  //   return { label: LABELS[x.index], value: x.value };
-  // });
-
-  // console.log("prediksi", prediksi);
 
   const axis =  1
 
@@ -58,17 +43,17 @@ cat.onload = async () => {
 
   console.log("prediction", prediction)
 
-  resultElement.innerText = JSON.stringify(prediction)
+  let txtPredict = ""
 
-  // const topK = getTopKClasses(result, 5);
-  // console.timeEnd("First prediction");
+  if (prediction[0] === 0) {
+    txtPredict = "Karsinoma Sel Basal"
+  } else {
+    txtPredict = "Karsinoma Sel Skuamosa"
+  }
 
-  // resultElement.innerText = "";
-  // topK.forEach((x) => {
-  //   resultElement.innerText += `${x.value.toFixed(3)}: ${x.label}\n`;
-  // });
+  resultElement.innerText = txtPredict
 
-  // model.dispose();
+  model.dispose();
 };
 
 const predict = (input) => {
@@ -111,4 +96,4 @@ const getTopKClasses = (logits, topK) => {
   });
 };
 
-cat.src = imageURL;
+cat.src = testing_image;
